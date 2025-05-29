@@ -1,0 +1,54 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ArkToken Deploy (Sync2 Compatible)</title>
+</head>
+<body>
+  <h2>ArkToken Deploy (via Sync2)</h2>
+  <label>WalletConnect URI:</label><br/>
+  <input type="text" id="wcUri" size="100"/><br/><br/>
+  <label>Token Supply:</label><br/>
+  <input type="number" id="supply" value="1000000"/><br/><br/>
+  <button onclick="deployToken()">Deploy ArkToken</button>
+  <p id="status"></p>
+
+  <script type="module">
+    import WalletConnectProvider from 'https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js';
+    import Web3 from 'https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js';
+
+    async function deployToken() {
+      const wcUri = document.getElementById('wcUri').value;
+      const supply = document.getElementById('supply').value;
+      const status = document.getElementById('status');
+
+      if (!wcUri) return status.innerText = "Missing WalletConnect URI";
+
+      const provider = new WalletConnectProvider({
+        rpc: {
+          100009: "https://sync-mainnet.vechain.org"  // Replace with correct chain if testnet
+        },
+        connectorOpts: { uri: wcUri }
+      });
+
+      await provider.enable();
+      const web3 = new Web3(provider);
+      const accounts = await web3.eth.getAccounts();
+
+      const contractABI = [ /* Insert simplified ABI if needed */ ];
+      const bytecode = "0x...";  // Replace with actual compiled ArkToken bytecode
+
+      const tx = {
+        from: accounts[0],
+        data: bytecode,
+        gas: 2000000
+      };
+
+      web3.eth.sendTransaction(tx)
+        .on('transactionHash', hash => status.innerText = "Tx sent: " + hash)
+        .on('receipt', receipt => status.innerText += "\nSuccess! Contract at: " + receipt.contractAddress)
+        .on('error', err => status.innerText = "Error: " + err.message);
+    }
+  </script>
+</body>
+</html>
